@@ -1,0 +1,3 @@
+sudo service postgresql start 
+/profile/{{ u.id  }}
+git reset HEAD^
