@@ -158,7 +158,17 @@ def posts():
 @requires_auth
 def follow(user_id):
     """create a follow relationship between the current user and the target user."""
-    user =User
+    user = Users.query.filter_by(user_id=user.id).first()
+    if user is None:
+        return jsonify ({'message':'Register to become a user' })
+    if user == g.current_user:
+        return jsonify ({'message': 'Please a valid user to follow'})
+    followID = user_id
+    userID = g.current_user['id']
+    follow = Follows(userID = userID, followerID = followID)
+    db.session.add(follow)
+    db.session.commit(follow)
+    return jsonify ({'message': 'You followed '}user_id)
 
 @app.route('/api/posts',methods=['GET']) 
 @requires_auth
@@ -168,8 +178,24 @@ def get_AllPost():
 
 @app.route('/api/posts/{post_id}/like',methods=['POST'])
 @requires_auth
-def like():
+def like(post_id):
     """ set a like on the current post by the logged in user"""
+    
+    
+    post = Posts.query.filter_by(post_id).first()
+    
+    if not post:
+        return jsonify({'message':'post does not exist'})
+        
+    user_id = g.current_user['id']
+    post_id = post
+    like = Likes(userID = user_id, postID = post_id)
+    db.session.add(like)
+    db.session.commit(like)
+    
+    total_likes = len(Likes.query.filter_by(postid = post_id).all())
+    return jsonify ({'message': 'You liked a user post','likes':total_likes})
+    
     """
     return jsonify({"message":"File Upload Successful","file":photo,"description":description})
     else:

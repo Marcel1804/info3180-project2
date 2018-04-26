@@ -258,11 +258,29 @@ const Users=Vue.component('users',{
      <div>
      
      </div>
+     
+     <div> 
+      
+      <ul class="userposts">
+        <li v-for="post in posts" class="post_item">
+        <img class ="imgs" :src="post.urlToImage " :alt="image"> </br>
+        </li>
+      </ul>
+      
+     </div>
      `,
      methods:{
-        
+        UserPosts: function(){
+         let self =this;
          
-         
+         fetch("/api/users/{user_id}/posts", {
+             method:'GET',
+             headers:{
+                    'X-CSRFToken':token
+                },
+                credentials: 'same-origin'
+         }) 
+        }
      }
     });
     

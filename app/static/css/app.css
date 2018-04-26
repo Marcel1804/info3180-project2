@@ -102,3 +102,18 @@ input,textarea,select{
      position:absolute;
      left:75%;
  }
+ 
+ .userpsosts{
+     list-style-type: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+ }
+ 
+ .post_item{
+     padding: 4px;
+    border-radius: 1%;
+    flex: 1 1 30%;
+    margin: 5px;
+    margin-bottom: 20px;
+ }
