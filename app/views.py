@@ -6,7 +6,7 @@ This file creates your application.
 """
 import os
 import datetime 
-#import jwt 
+import jwt 
 import base64
 from app import app, db, login_manager
 from flask import render_template, request, redirect, url_for, flash, jsonify, g
@@ -57,8 +57,8 @@ def requires_auth(f):
 
     return decorated 
     
-def generate_token(): 
-    pass
+
+    
 
 @app.route('/')
 def home():
@@ -111,30 +111,33 @@ def register():
 @app.route('/api/auth/login',methods=['POST'])
 def login():
     """accepts login credentials as username and password""" 
-    form = LoginForm() 
-    if request.method == "POST": 
-        if form.validate_on_submit(): 
-            """getting the info from the user form"""
-            username= form.username.data 
-            password = form.password.data 
-            remember_me = form.remember_me.data   
-            
-            
-            """querying the database for username""" 
-            user= UserProfile.query.filter_by(username=username).first() 
-            
-            """load user into a session """
-            login_user(user) 
-            
-            logsuccess={"message": "User successfully logged in"}
-            return jsonify (logsuccess)
+    form = LoginForm()  
+    def generate_token(): 
+        #payload= {"sub": , user}
+        if request.method == "POST": 
+            if form.validate_on_submit(): 
+                """getting the info from the user form"""
+                username= form.username.data 
+                password = form.password.data 
+                remember_me = form.remember_me.data   
+                
+                
+                """querying the database for username""" 
+                user= UserProfile.query.filter_by(username=username).first() 
+                
+                """load user into a session """
+                login_user(user) 
+                
+                logsuccess={"message": "User successfully logged in"}
+                return jsonify (logsuccess)
         return redirect(url_for("index"))    
     
 
 @app.route('/api/auth/logout',methods=['GET']) 
 @login_required
 def logout():
-    """logout users""" 
+    """logout users"""
+    g.active_user = None
     logout_user()  
     logout={"message": " User successfully logged out"}
     return jsonify(logout)
@@ -153,9 +156,9 @@ def posts():
 
 @app.route('/api/users/{user_id}/follow',methods=['POST'])
 @requires_auth
-def follow():
+def follow(user_id):
     """create a follow relationship between the current user and the target user."""
-    pass
+    user =User
 
 @app.route('/api/posts',methods=['GET']) 
 @requires_auth
