@@ -3,6 +3,9 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 
+UPLOAD_FOLDER = './app/static/uploads'
+TOKEN_SECRET = 'Thisissecret'
+
 app = Flask(__name__)
 csrf =CSRFProtect(app)
 app.config['SECRET_KEY'] = "372ijma/.D/V,A,KK,ASK,1mejlADK\S][SP;SLKK2I231JHRMWGU2009SL<AFUJMASJS"  # you should make this more random and unique
@@ -22,4 +25,6 @@ login_manager.login_message_category = "info"  # customize the flash message cat
 
 
 app.config.from_object(__name__)
+filefolder = app.config['UPLOAD_FOLDER']
+token_key = app.config['TOKEN_SECRET']
 from app import views

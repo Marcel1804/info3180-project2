@@ -8,13 +8,13 @@ import os
 import datetime 
 import jwt 
 import base64
-from app import app, db, login_manager
-from flask import render_template, request, redirect, url_for, flash, jsonify, g
+from app import app, db, login_manager, filefolder, token_key
+from flask import render_template, request, redirect, url_for, flash, jsonify, g, session
 from flask import _request_ctx_stack 
 from flask_login import login_user, logout_user, current_user, login_required
-from forms import RegisterForm, LoginForm, PostForm 
-from functools import wraps 
-from models import UserProfile
+from forms import RegistrationForm, LoginForm, PostForm
+from functools import wraps #z
+from models import Users, Posts, Likes, Follows
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash 
 
@@ -45,14 +45,14 @@ def requires_auth(f):
 
         token = parts[1]
         try:
-             payload = jwt.decode(token, 'some-secret')
+             payload = jwt.decode(token, token_key)
 
         except jwt.ExpiredSignature:
             return jsonify({'code': 'token_expired', 'description': 'token is expired'}), 401
         except jwt.DecodeError:
             return jsonify({'code': 'token_invalid_signature', 'description': 'Token signature is invalid'}), 401
 
-        g.current_user = user = payload
+        g.active_user = user = payload
         return f(*args, **kwargs)
 
     return decorated 
@@ -62,7 +62,7 @@ def requires_auth(f):
 
 @app.route('/')
 def home():
-    form=RegisterForm()
+    form=RegistrationForm()
     """Render website's initial page and let VueJS take over."""
     return render_template('home.html', form=form)
 
@@ -75,144 +75,183 @@ def about():
 @app.route('/api/users/register', methods=['POST'])
 def register():
     """accepts user information and save it to the database"""
-    form=RegisterForm()
-    now = datetime.datetime.now()
+    form = RegistrationForm()
     
-    if request.method == 'POST' and form.validate_on_submit():
-        username= form.username.data
-        password = form.password.data
-        confirmpassword = form.confirmpassword.data
-        fname = form.firstname.data
-        lname = form.lastname.data
-        gender = form.gender.data
-        email = form.email.data
-        location = form.location.data
-        bio=form.bio.data
-        photo=form.photo.data
-        filename = secure_filename(photo.filename)
-        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        photo=photo.filename
-        date=now.strftime("%B %d, %Y")
-        
-        user = UserProfile.query.filter_by(username=username).first()
-        if user is None :
-            user=UserProfile(username, password, fname, lname, gender, location, email, bio, photo, date)
-            db.session.add(user)
-            db.session.commit()
-            flash('Registration was successfully', 'success')
-            return jsonify({"message":" User successfully registered"})
-        elif user is not None:
-            flash("already a member", 'danger')
-            return jsonify({"message":"already a member"})
-    err=flash_errors(form)
-    return jsonify({"errors":err})
+    if request.method == "POST" and form.validate_on_submit():
+        #Data sent from the form that is requested
+        userName  = request.form['userName']
+        password  = request.form['password']
+        firstName = request.form['firstName']
+        lastName  = request.form['lastName']
+        email     = request.form['email']
+        location  = request.form['location']
+        biography = request.form['biography']
+        proPhoto  = request.files['proPhoto']
+        profile_picture = secure_filename(proPhoto.filename)
+        now = datetime.datetime.now()
+        user = Users(firstname = firstName, lastname = lastName, username = userName, password = password, email = email, location = location, biography = biography, proPhoto = profile_picture, joined_on = now )
+        db.session.add(user)
+        db.session.commit()
+        proPhoto.save(os.path.join(filefolder, profile_picture))
+        register_body = [{"message": "User successfully registered"}]
+        return jsonify(result=register_body)
+    error_collection = flash_errors(form)
+    error = [{'errors': error_collection}]
+    return  jsonify(errors=error)
 
 
 @app.route('/api/auth/login',methods=['POST'])
 def login():
     """accepts login credentials as username and password""" 
-    form = LoginForm()  
-    def generate_token(): 
-        #payload= {"sub": , user}
-        if request.method == "POST": 
-            if form.validate_on_submit(): 
-                """getting the info from the user form"""
-                username= form.username.data 
-                password = form.password.data 
-                remember_me = form.remember_me.data   
-                
-                
-                """querying the database for username""" 
-                user= UserProfile.query.filter_by(username=username).first() 
-                
-                """load user into a session """
-                login_user(user) 
-                
-                logsuccess={"message": "User successfully logged in"}
-                return jsonify (logsuccess)
-        return redirect(url_for("index"))    
+    form = LoginForm()
+    if request.method == "POST" and form.validate_on_submit():
+        userName = request.form['userName']
+        password = request.form['password']
+        
+        user = Users.query.filter_by(username=userName, password=password).first()
+        if user is None:
+            return jsonify(errorm="Incorrect username or password")
+            
+        payload = {'user_id' : user.id}
+        token = jwt.encode(payload, token_key)
+        session['userid'] = user.id;
+        return jsonify(data={'token': token, 'userid': user.id}, message="User logged in")
+    error_collection = form_errors(form)
+    error = [{'errors': error_collection}]
+    return  jsonify(errors=error)   
     
 
 @app.route('/api/auth/logout',methods=['GET']) 
-@login_required
+@requires_auth
 def logout():
     """logout users"""
-    g.active_user = None
-    logout_user()  
-    logout={"message": " User successfully logged out"}
-    return jsonify(logout)
-
-@app.route('/api/users/{user_id}/posts',methods=["POST","GET"]) 
-@requires_auth
-def posts():
-    """used for adding posts to the users feed"""
-    form=PostForm()
-    if request.method == 'POST' and form.validate_on_submit():
-        pass
-    """return a user's posts"""
-    if request.method == 'GET' and form.validate_on_submit():
-        pass
+    g.current_user = None
+    session.pop('userid', None)
+    return jsonify(message = "logout")
     
 
-@app.route('/api/users/{user_id}/follow',methods=['POST'])
+@app.route('/api/posts/', methods=["GET"])
 @requires_auth
-def follow(user_id):
-    """create a follow relationship between the current user and the target user."""
-    user = Users.query.filter_by(user_id=user.id).first()
-    if user is None:
-        return jsonify ({'message':'Register to become a user' })
-    if user == g.current_user:
-        return jsonify ({'message': 'Please a valid user to follow'})
-    followID = user_id
-    userID = g.current_user['id']
-    follow = Follows(userID = userID, followerID = followID)
+def get_all_posts():
+    # query database for all post
+    posts = Posts.query.order_by(Posts.created_on.desc()).all()
+    # output list to hold dictionary
+    output = []
+    for post in posts:
+        user = Users.query.filter_by(id = post.userID).first()
+        numberlikes = Likes.query.filter_by(postID = post.id).all()
+        numberoflikes=[];
+        for number in numberlikes:
+            num = {'test': "counted"}
+            numberoflikes.append(num)
+        didlike = Likes.query.filter_by(userID=session['userid'], postID= post.id).first()
+        if(didlike is None):
+            likeflag = False
+        else:
+            likeflag = True
+        postdate= post.created_on.strftime("%d %b %Y");
+        posted= {"postid":post.id,"userid": post.userID, "username": user.username, "pro_photo": user.proPhoto, "photo": post.photo, "caption": post.caption, "created_on": postdate, "likes": numberoflikes, "likeflag": likeflag}
+        output.append(posted)
+    return jsonify(data= output)    
+    
+
+
+@app.route('/api/users/<user_id>/posts',methods=["GET","POST"])
+@requires_auth
+def make_post(user_id):
+    form = PostForm()
+    if request.method == "POST":
+        if form.validate_on_submit():
+            userID = user_id
+            caption = request.form['caption']
+            photo  = request.files['photo']
+            now = datetime.datetime.now()
+            
+            post_picture = secure_filename(photo.filename)
+            post = Posts(userID = userID, photo = post_picture, caption = caption, created_on = now)
+            
+            db.session.add(post)
+            db.session.commit()
+            
+            photo.save(os.path.join(filefolder, post_picture))
+            return jsonify({'message':"Successfully created a new post"})
+            
+    elif request.method == "GET":
+        user = Users.query.filter_by(id=user_id).first()
+        if not user:
+            return jsonify({'message': "no user found"})
+        user_posts = Posts.query.filter_by(userID=user_id).all()
+        # output list to hold dictionary    
+        output = []
+        for user_post in user_posts:
+            # create dictionary
+            post_data = {'id':user_post.id,'userID': user_post.userID,'photo': user_post.photo,'caption': user_post.caption,'created_on': user_post.created_on}
+            output.append(post_data)
+        return jsonify(data=output)
+    error_collection = form_errors(form)
+    error = [{'errors': error_collection}]
+    return  jsonify(errors=error)
+    
+    
+@app.route('/api/users/<user_id>/', methods=["GET"])
+@requires_auth
+def get_user(user_id):
+    # query database for all post
+    user = Users.query.filter_by(id=user_id).first()
+    output = []
+    # output list to hold dictionary
+    if (int(user_id) == session['userid']):
+        join= user.joined_on.strftime("%B %Y");
+        info= {"userid": user.id, "username": user.username, "firstname": user.firstname, "lastname": user.lastname, "email": user.email, "location": user.location, "biography": user.biography,"photo": user.proPhoto, "joined_on": join}
+        output.append(info)
+        return jsonify(profile = output, isuser=True)
+    join= user.joined_on.strftime("%B %Y");
+    info= {"userid": user.id, "username": user.username, "firstname": user.firstname, "lastname": user.lastname, "email": user.email, "location": user.location, "biography": user.biography,"photo": user.proPhoto, "joined_on": join}
+    output.append(info)
+    return jsonify(profile= output)
+    
+@app.route('/api/users/<user_id>/followersnumber',methods=["GET"])
+@requires_auth
+def followersnumber(user_id):
+    numberfollow = Follows.query.filter_by(userID=user_id).all()
+    numberoffollower=[]
+    for number in numberfollow:
+        num = {'test': "counted"}
+        numberoffollower.append(num)
+    return jsonify (follower= numberoffollower)
+    
+@app.route('/api/users/<user_id>/following',methods=["GET"])
+@requires_auth
+def followercheck(user_id):
+    followcheck = Follows.query.filter_by(userID=user_id, followerID=session['userid']).first()
+    if(followcheck is None):
+        return jsonify (following= False)
+    return jsonify (following= True)
+    
+@app.route('/api/users/<user_id>/follow',methods=["POST"])
+@requires_auth
+def create_follow(user_id):
+    follow = Follows(userID = user_id, followerID = session['userid'])
     db.session.add(follow)
-    db.session.commit(follow)
-    return jsonify ({'message': 'You followed '}user_id)
-
-@app.route('/api/posts',methods=['GET']) 
+    db.session.commit()
+    return jsonify (message= 'You followed a user')
+    
+    
+@app.route('/api/users/<post_id>/like',methods=["POST"])
 @requires_auth
-def get_AllPost():
-    """return all post for all users."""
-    pass 
-
-@app.route('/api/posts/{post_id}/like',methods=['POST'])
-@requires_auth
-def like(post_id):
-    """ set a like on the current post by the logged in user"""
+def create_like(post_id):
+    likecheck = Likes.query.filter_by(userID=session['userid'], postID=post_id).first()
+    if(likecheck is None):
+        like = Likes(userID = session['userid'], postID = post_id)
+        db.session.add(like)
+        db.session.commit()
+        return jsonify (message= 'You like a post')
+    return jsonify (DB= 'Already liked post')
     
-    
-    post = Posts.query.filter_by(post_id).first()
-    
-    if not post:
-        return jsonify({'message':'post does not exist'})
-        
-    user_id = g.current_user['id']
-    post_id = post
-    like = Likes(userID = user_id, postID = post_id)
-    db.session.add(like)
-    db.session.commit(like)
-    
-    total_likes = len(Likes.query.filter_by(postid = post_id).all())
-    return jsonify ({'message': 'You liked a user post','likes':total_likes})
-    
-    """
-    return jsonify({"message":"File Upload Successful","file":photo,"description":description})
-    else:
-        return jsonify({"errors":form_errors(form)})
-    """
-    pass
-
-@app.route('/secure-page')
-@requires_auth
-def secure_page():
-    """Render a secure page on our website that only logged in users can access."""
-    return render_template('secure_page.html')
 
 
 
-# Flash errors from the form if validation fails
-def flash_errors(form):
+def form_errors(form):
     error_messages = []
     """Collects form errors"""
     for field, errors in form.errors.items():
@@ -224,6 +263,7 @@ def flash_errors(form):
             error_messages.append(message)
 
     return error_messages
+
   
 
 ###

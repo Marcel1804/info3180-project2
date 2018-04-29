@@ -1,26 +1,24 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, TextAreaField, PasswordField, BooleanField
-from wtforms.validators import DataRequired
-from flask_wtf.file import FileField, FileRequired, FileAllowed
-    
-class RegisterForm(FlaskForm):
-    username=StringField('username', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    confirmpassword = PasswordField('ConfirmPassword', validators=[DataRequired()])
-    firstname=StringField('Firstname', validators=[DataRequired()])
-    lastname=StringField('Lastname', validators=[DataRequired()])
-    gender=SelectField('Gender', choices=[('Male','Male'), ('Female', 'Female')])
-    email=StringField('Email', validators=[DataRequired()])
-    location=StringField('Location', validators=[DataRequired()])
-    bio=TextAreaField('Biography', validators=[DataRequired()])
-    photo = FileField('Photo',validators=[FileRequired(),FileAllowed(['png', 'jpg', 'jpeg', 'gif','Images only!'])])
+from wtforms import StringField, PasswordField, BooleanField, SelectField, TextAreaField, IntegerField
+from wtforms.validators import InputRequired, Email
+from wtforms.fields.html5 import DateField
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember_me = BooleanField('Remember me')
-
-class PostForm(FlaskForm):
-    photo = FileField('Photo',validators=[FileRequired(),FileAllowed(['png', 'jpg', 'jpeg', 'gif','Images only!'])])
-    caption=TextAreaField('Caption', validators=[DataRequired()])
+    userName = StringField('Username', validators=[InputRequired(message='Enter username')])
+    password = PasswordField('Password', validators=[InputRequired(message='Enter password')])
     
+class RegistrationForm(FlaskForm):
+    userName= StringField('Username', validators=[InputRequired(message='Enter firstname')])
+    password= PasswordField('Password', validators=[InputRequired()])
+    firstName=StringField('FirstName', validators=[InputRequired()])
+    lastName=StringField('LastName', validators=[InputRequired()])
+    email=StringField('Email', validators=[InputRequired(message='Email is required'), Email(message="Only Emails")])
+    location=StringField('Location', validators=[InputRequired()])
+    biography=TextAreaField('Biography',validators=[InputRequired()])
+    proPhoto=FileField('Image', validators=[FileRequired('Please input a file'), FileAllowed(['jpg', 'png'], 'Images only!')])
+
+class PostForm(FlaskForm): #Sir said in the documentation it suppose to be named PostForm 
+    photo = FileField('Image', validators=[FileRequired('Please input a file'), FileAllowed(['jpg', 'png'], 'Images only!')])
+    caption = TextAreaField('Caption',validators=[InputRequired()])
