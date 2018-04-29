@@ -3,7 +3,7 @@
 Vue.component('app-header', {
     template: `
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-      <a class="navbar-brand" href="#">Photogram</a>
+      <a class="navbar-brand" href="#"><img src="/static/uploads/pic.jpg" alt="home page picture" style="width:20px;height:20px;"/> Photogram</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -78,7 +78,7 @@ const Home = Vue.component('home', {
           </div>
            <div class="Welcome">
            <div class="padtext">
-             <h1><img src="/static/uploads/pic.png" alt="home page picture" style="width:20px;height:20px;"/> Photogram</h1>
+             <h1><img src="/static/uploads/pic.jpg" alt="home page picture" style="width:20px;height:20px;"/> Photogram</h1>
             </div>
             <div class="pad">
              <p> Share photos of your favourite moments with friends, family and the world.</p> 
@@ -95,14 +95,29 @@ const Home = Vue.component('home', {
 const Register=Vue.component('register',{
      template:`
      <div>
-     <h1 class="b">&nbsp Registration </h1>
-     >
-            <form id="register"  @submit.prevent="RegisterForm" method="POST" enctype="multipart/form-data">
+     <h1 class="b">Registration </h1>
+            <form class="form" id="register"  @submit.prevent="RegisterForm" method="POST" enctype="multipart/form-data">
             <div class="form-space">
+                <div class="row">
+                      <div class="col-md-11">
+                          <div class="form-group">
+                              <label class="label_bold" for="msg" name="Username"> Username </label>
+                              <input type="text" id="form_userName" class="form-control" name="userName"/>
+                          </div>
+                      </div>
+                </div>
                 <div class="row">
                     <div class="col-md-11">
                         <div class="form-group">
-                            <label class="label_bold" for="msg"> First Name </label>
+                            <label class="label_bold" for="msg" name="Password"> Password </label>
+                            <input type="password" id="form_password" class="form-control" name="password"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-11">
+                        <div class="form-group">
+                            <label class="label_bold" for="msg" name="Firstname"> Firstname </label>
                         </div>
                         <div class="form-group">
                             <input type="text" id="form_firstName" class="form-control" name="firstName"/>
@@ -112,33 +127,17 @@ const Register=Vue.component('register',{
                 <div class="row">
                     <div class="col-md-11">
                         <div class="form-group">
-                            <label class="label_bold" for="msg"> Last Name </label>
+                            <label class="label_bold" for="msg" name="LastName"> Lastname </label>
                         </div>
                         <div class="form-group">
                             <input type="text" id="form_lastName" class="form-control" name="lastName"/>
                         </div>
                     </div>
                 </div>
-                  <div class="row">
-                      <div class="col-md-11">
-                          <div class="form-group">
-                              <label class="label_bold" for="msg"> Username </label>
-                              <input type="text" id="form_userName" class="form-control" name="userName"/>
-                          </div>
-                      </div>
-                </div>
                 <div class="row">
                     <div class="col-md-11">
                         <div class="form-group">
-                            <label class="label_bold" for="msg"> Password </label>
-                            <input type="password" id="form_password" class="form-control" name="password"/>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-11">
-                        <div class="form-group">
-                            <label class="label_bold" for="msg"> Email </label>
+                            <label class="label_bold" for="msg" name="Email"> Email </label>
                             <input type="text" id="form_email" class="form-control" placeholder="eg. exampl@example.com" name="email"/>
                         </div>
                     </div>
@@ -146,7 +145,7 @@ const Register=Vue.component('register',{
                 <div class="row">
                     <div class="col-md-11">
                         <div class="form-group">
-                            <label class="label_bold" for="msg"> Location </label>
+                            <label class="label_bold" for="msg" name="location"> Location </label>
                             <input type="text" id="form_location" class="form-control" placeholder="eg. Kingston, Jamaica" name="location"/>
                         </div>
                     </div>
@@ -154,24 +153,25 @@ const Register=Vue.component('register',{
                 <div class="row">
                     <div class="col-lg-11">
                         <div class="form-group">
-                            <label class="label_bold" for="msg"> Biography </label>
+                            <label class="label_bold" for="msg"name="Biography"> Biography </label>
                             <textarea id="msg" name="biography" class="form-control"/></textarea>
                         </div>
                     </div>
                 </div>
-                <p class="label_bold">Profile Picture</p>
-                    <div class="row photo">
-                        <div class="upload-btn-wrapper">
-                            <button id="btn">Browse</button>
-                            <input type="file" name="proPhoto"/>
-                        </div>
+                <div class="row">
+                    <div class="col-lg-11">
+                    <div class="form-group">
+                      <lable class="label_bold" for="msg" name="proPhoto">Photo</lable>
+                      <input type="file" name="proPhoto"/>
                     </div>
-                </div>
+                    </div>
+                </div>  
                 <div class="row">
                     <div class="col-md-11">
-                        <button class="btn btn-login" type="submit">Register</button>
+                        <button class="btn btn-primary greenbut butsize1" type="submit">Register</button>
                     </div>
                 </div>
+            </div>
             </form>
      </div> `,
     data: function() {
@@ -220,11 +220,11 @@ const Login=Vue.component('login',{
      <h1 class="b">Login</h1>
      <form class="form" id="login" @submit.prevent="LoginForm" method="POST" >
          <div>
-         <label for="username">Username</label><br>
+         <label for="username" name="Username">Username</label><br>
          <input type='text' name='userName'/>
          </div>
          <div>
-         <label for="password">Password</label><br>
+         <label for="password" name="Password">Password</label><br>
          <input type='password' name='password'/>
          </div>
          <br>
