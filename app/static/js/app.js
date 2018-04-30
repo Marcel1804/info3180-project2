@@ -163,7 +163,7 @@ const Register=Vue.component('register',{
                 <div class="row">
                     <div class="col-lg-11">
                     <div class="form-group">
-                      <lable class="label_bold">Photo</lable>
+                      <lable class="label_bold">Photo</label>
                       <input type="file" name="photo"/>
                     </div>
                     </div>
