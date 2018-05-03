@@ -1,5 +1,6 @@
 /* Add your Application JavaScript */
-
+let con='no';
+let User_id='';
 
 Vue.component('app-header', {
     template: `
@@ -17,22 +18,28 @@ Vue.component('app-header', {
              <li class="nav-item active">
                      <router-link to="/" class="nav-link">Home</router-link>
             </li>
+            
             <li class="nav-item active">
-                     <router-link to="/explore" class="nav-link">Explore</router-link>
+                     <router-link to="/explore" class="nav-link" >Explore</router-link>
              </li>
              <li class="nav-item active">
                      <router-link to="/users/{user_id}" class="nav-link">My Profile</router-link>
              </li>
-             <li v-if="con=='yes'" class="nav-item active">
+             <li v-if="conn=='yes'" class="nav-item active">
               <router-link class="nav-link" to="/logout">Logout</router-link>
-             </li v-esle> 
-             <li class="nav-item active">
+             </li > 
+             <li v-else class="nav-item active">
               <router-link class="nav-link" to="/login">Login</router-link>
             </li> 
         </ul>
       </div>
     </nav>
-    `
+    `,
+    data: function() {
+       return {
+           conn:con
+       };
+    }
 });
 
 Vue.component('app-footer', {
@@ -76,7 +83,7 @@ const Register=Vue.component('register',{
      template:`
      <div>
      <h1 class="b">&nbsp Registration </h1>
-            <form class="form" id="register"  @submit.prevent="RegisterForm" method="POST" enctype="multipart/form-data">
+        <form class="form" id="register" @submit.prevent="RegisterForm" method="POST" enctype="multipart/form-data">
             <div class="form-space">
                 <div class="row">
                       <div class="col-md-11">
@@ -163,14 +170,14 @@ const Register=Vue.component('register',{
                 <div class="row">
                     <div class="col-lg-11">
                     <div class="form-group">
-                      <lable class="label_bold">Photo</label>
+                      <label class="label_bold">Photo</label>
                       <input type="file" name="photo"/>
                     </div>
                     </div>
                 </div>  
                 <div class="row">
                     <div class="col-md-11">
-                        <button class="btn btn-primary greenbut butsize1" type="submit">Register</button>
+                        <button type="submit" class="btn btn-primary greenbut butsize1">Register</button>
                     </div>
                 </div>
             </div>
@@ -195,18 +202,18 @@ const Register=Vue.component('register',{
               })
               .then(function(jsonResponse){
                   //display a success message
-                  //console.log(jsonResponse);
+                  if(jsonResponse.message=="User successfully registered")
+                      {
+                        window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/users/{user_id}";
+                        User_id=jsonResponse.user;
+                        con='yes';
+                      }
+                  console.log(jsonResponse);
               })
               .catch(function(error){
                   console.log(error);
               });
         }
-    },
-    data: function() {
-       return {
-           response: [],
-           error: []
-       };
     }
 });
 
@@ -216,15 +223,15 @@ const Login=Vue.component('login',{
      <h1 class="b">Login</h1>
      <form class="form" id="login" @submit.prevent="LoginForm" method="POST" >
          <div>
-         <label for="username" name="Username">Username</label><br>
-         <input type='text' name='userame'/>
+         <label for="username" name="username">Username</label><br>
+         <input type='text' name='username'/>
          </div>
          <div>
          <label for="password" name="Password">Password</label><br>
          <input type='password' name='password'/>
          </div>
          <br>
-         <input type="checkbox" name="remember_me" value="true" class="c"/>Remember me <br>
+         <input type="checkbox" name="remember_me" value="remember_me" class="c"/>Remember me <br>
          <button type="submit" class="btn btn-primary greenbut butsize1">Login</button>
      </form>
      </div>
@@ -248,25 +255,13 @@ const Login=Vue.component('login',{
               })
               .then(function(jsonResponse){
                   //display a success message
-                  con='yes';
                   console.log(jsonResponse);
-                //   if(jsonResponse.errors){
-                //     self.error = jsonResponse.errors;
-                // }
-                // else if(jsonResponse.errorm)
-                // {
-                //     let emessage = jsonResponse.errorm;
-                //     self.merror = emessage;
-                //     self.messageFlag = true;
-                // }
-                // else
-                // {
-                //     let jwt_token = jsonResponse.data.token;
-                //     let userid = jsonResponse.data.userid;
-                //     localStorage.setItem('token', jwt_token);
-                //     localStorage.setItem('userid', userid);
-                //     self.$router.push('/explore');
-                // }
+                  if(jsonResponse.message=="login was successfully")
+                  {
+                    window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/explore";
+                    User_id=jsonResponse.user;
+                    con='yes';
+                  }
               })
               .catch(function(error){
                   console.log(error);
@@ -277,550 +272,269 @@ const Login=Vue.component('login',{
 });
     
 const Logout= Vue.component('logout-form', {
-//     template: `<div></div>`,
-//     created: function() {
-//         let self = this;
-//         fetch("/api/auth/logout", { 
-//             method: 'GET',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token')
-//             }
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             let message = jsonResponse.message;
-//             if(jsonResponse.message){
-//                 localStorage.removeItem('token');
-//                 localStorage.removeItem('userid');
-//                 self.$router.push('/');
-                
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//         });
-//     },
-//     methods: {
-//     }
+    created: function() {
+        let self = this;
+        fetch("/api/auth/logout", { 
+            method: 'GET',
+            'headers': {
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+            }
+        })
+            .then(function (response) {
+            return response.json();
+            })
+            .then(function (jsonResponse) {
+            // display a success message
+            console.log(jsonResponse);
+            //let message = jsonResponse.message;
+            if(jsonResponse.message=="User successfully logged out")
+            {
+                //localStorage.removeItem('token');
+                //localStorage.removeItem('userid');
+                self.$router.push('/');
+                User_id="";
+                con="no"
+            }
+            })
+            .catch(function (error) {
+            console.log(error);
+        });
+    }
 });
-    
+   
 const Explore=Vue.component('explore',{
-//      template: `
-//     <div>
-//         <div v-if="messageFlag" class="sidenav">
-//             <router-link class="btn btn-primary" to="/post/new">New Post</router-link>
-//         </div>
-//         <div v-else>
-//             <router-link class="btn btn-primary post_div" to="/post/new">New Post</router-link>
-//             <P class="alert alert-danger"><center> PLEASE LOGIN TO SEE EXPLORE VIEW!!!!!.</br> P.S: FROM YOUR CREATOR K.NELSON and O.CHRISTIE</center></P>
-//         </div>
-//         <div class=" container-fluid fix-explore" v-if="output">
-//             <li v-for="resp in output"class="list">
-//                 <div id="wrapper">
-// 					<section class="main items">
-//     					<div class="post-box">
-//                             <p><img v-bind:src= "'/static/uploads/'+resp.pro_photo"style="width: 2rem; height: 2rem; padding: 3px; border-radius:100px;"/><router-link v-bind:to="'/users/' +resp.userid">{{resp.username}}</router-link></p>
-//     						<article class="item">
-//     							<header>
-//     								<img v-bind:src= "'/static/uploads/'+resp.photo" style="width: 50rem; height: 40rem;"/>
-//     							</header>
-//     							<p class="caption"><strong style="color:black;">{{resp.username}}</strong> {{resp.caption}}</p>
-//     						</article>
-//     						<section class="like like_8oo9w">
-//     						<div v-if="resp.likeflag">
-//                                 <a class="like_eszkz like_l9yih nohover" @click="likepost(resp.postid)"><span class="span_8scx2 coreSpriteHeartOpen2">{{resp.likes.length}}Likes</span></a>
-//                                 <a class="like_eszkz like_et4ho nohover" href="#"><span class="span_8scx2">{{resp.created_on}}</span></a>
-//                             </div>
-//                             <div v-else>
-//                                 <a class="like_eszkz like_l9yih nohover" @click="likepost(resp.postid)"><span class="span_8scx2 coreSpriteHeartOpen">{{resp.likes.length}}Likes</span></a>
-//                                 <a class="like_eszkz like_et4ho nohover" href="#"><span class="span_8scx2">{{resp.created_on}}</span></a>
-//                             </div>
-//                             </section>
-//     					</div>
-// 					</section>
-// 			     </div>
-//             </li>
-//         </div>
-//         <div v-else>
-//             <li v-for="resp in output"class="list">
-//                 <h5>No Posts</h5>
-//             </li>
-//         </div>
-//     </div>
-//     `,
-//      watch: {
-         
-//         'trigger' (newvalue, oldvalue){
-//             this.reload();
-//         }
-//       },
-//     created: function() {
-//         let self = this;
-//         fetch("/api/posts/", { 
-//             method: 'GET',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             if(jsonResponse.data){
-//                 self.output = jsonResponse.data;
-//                 self.messageFlag = true;
-//                 self.trigger = false;
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//         });
-//     },
-//     data: function() {
-//       return {
-//           output: [],
-//           error: [],
-//           messageFlag: false,
-//           trigger: null,
-//       };
-//     },
-//     methods: {
-//         reload(){
-//             let self = this;
-//         fetch("/api/posts/", { 
-//             method: 'GET',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             if(jsonResponse.data){
-//                 self.output = jsonResponse.data;
-//                 self.messageFlag = true;
-//                 self.trigger = false;
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//         });
-//         },
-//         likepost(post_id) {
-//             let self = this;
-//             fetch("/api/users/"+post_id+"/like", { 
-//             method: 'POST',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             if(jsonResponse.message){
-//                 let message = jsonResponse.message;
-//                 self.trigger = true;
-//             }else if(jsonResponse.DB){
-//                 let DB = jsonResponse.DB;
-//                 alert(DB);
-//             }else{
-//                 alert("Failed to like post");
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//             });
-//         }
-//     }
+     template: `
+    <div >
+        <div v-if="uc==''">
+            <p>Please login or sign-up to benefit from this Feature </p>
+        </div>
+        <div v-else >
+            <div>
+                    <h2 ></h2>
+                     <ul class="posts__list">
+                        <li v-for="user in users"class="post_item" >
+                             <div class="space3">
+                             <h6><img v-bind:src="user.userpro" alt="User Profile picture" style="width:20px;height:20px;"/> {{user.username}}</h6>
+                             <img v-bind:src="user.postphoto" alt="Post image" style="width:800px;height:200px;"/>
+                             <br>
+                                {{user.caption}}
+                             </div>
+                             <div>
+                               <span> <img src="/static/uploads/like.jpg" alt="like icon" style="width:20px;height:20px;"/> {{like}} Likes </span><span class="space2"> {{user.created_on}}</span>
+                            </div>
+                        </li>
+                </ul>
+             </div>
+            <div class="postbut ">
+                <router-link class="btn btn-primary butsize1" to="/post/new">New Post</router-link>
+            </div>
+        </div>
+    </div>`,
+     created: function(){
+        let self =this;
+        fetch('/api/posts',{
+                method:'GET',
+                headers:{
+                    'X-CSRFToken':token
+                },
+                credentials: 'same-origin'
+            })
+             .then(function(response){
+                  return response.json();
+              })
+              .then(function(jsonResponse){
+                  //display a success message
+                  self.users = jsonResponse.post; 
+                  console.log(jsonResponse);
+              })
+              .catch(function(error){
+                  console.log(error);
+              });
+    },
+    data: function(){
+        return{
+            users:[],
+            uc:User_id,
+            like:[]
+        };   
+        }
 });
     
 const Users=Vue.component('users',{
-//      template:`
-//     <div>
-//         <div v-if="info" class="container-fluid">
-//             <li v-for="user in info" class="list">
-//                 <div class="row border-style center profile profiles-container">
-//                     <a href="#"><img v-bind:src= "'/static/uploads/'+user.photo" class="post_pic"></a>
-//                         <div class="col">
-//                             <h2><strong>{{user.firstname}} {{user.lastname}}</strong></h2>
-//                             <h5 id="pro_info"><span>{{ user.location}}</span></h5>
-//                             <h5 id="pro_date"><span> Member since: {{ user.joined_on}}</span></h5>
-//                             <h5 id="pro_info"><span>{{ user.biography}}</span></h5>
-//                         </div>
-//                     <div class="view-profile center col-3 bio">
-//                         </br>
-//                         <section class="like like_8oo9w">
-//                             <p class="follow_count"><span class="post_len">{{output.length}}</span><span class="follow_len">{{numberoffollower.length}}</span></p>
-//                         </section>
-//                         <section class="like like_8oo9w">
-//                             <p class="follow_count"><span class="follow_title">Posts</span><span class="follow_title">Followers</span></p>
-//                         </section>
-//                         <div v-if="isuser">
-//                         </div>
-//                         <div v-else class="pro-btn">
-//                             <div v-if="following">
-//                                 <a class="view-btn btn-login pro-style" >Following</a>
-//                             </div>
-//                             <div v-else>
-//                                 <a class="view-btn btn-primary pro-style" @click="follow">Follow</a>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </li>
-//         </div>
-//         <div v-else>
-//             <li v-for="resp in info"class="list">
-//                 <h5>No Posts</h5>
-//             </li>
-//         </div>
-//         <div style="flex-direction: column; padding-bottom: 200px; padding-top: 0px;">
-//             <div class="imageView">
-//                 <li v-for="pic in output" class="list li_grid">
-//                     <img  v-bind:src= "'/static/uploads/'+pic.photo" class="profile_post">
-//                 </li>
-//             </div>
-//         </div>
-//     </div>
-//     `,
-//     watch: {
-//         '$route' (to, fom){
-//             this.reload()
-//         },
-//         'following' (newvalue, oldvalue){
-//             this.reload()
-//         }
-//       },
-//     created: function() {
-//         let self = this;
-//         let userid = this.$route.params.userid;
-//         fetch("/api/users/"+userid+"/posts", { 
-//             method: 'GET',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             if(jsonResponse.data){
-//                 self.output = jsonResponse.data;
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//         });
-//         fetch("/api/users/"+userid+"/", { 
-//             method: 'GET',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             if(jsonResponse.profile){
-//                 self.info = jsonResponse.profile;
-//             }
-//             if(jsonResponse.isuser){
-//                 self.isuser = jsonResponse.isuser;
-//             }else{
-//                 self.isuser = false;
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//         });
-//         fetch("/api/users/"+userid+"/followersnumber", { 
-//             method: 'GET',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             if(jsonResponse.follower){
-//                 self.numberoffollower = jsonResponse.follower;
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//         });
-//         fetch("/api/users/"+userid+"/following", { 
-//             method: 'GET',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             let follow = jsonResponse.following
-//             if(follow==false){
-//                 console.log(follow);
-//                 self.following = false;
-//             }else{
-//                 self.following = true;
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//             });
-//     },
-//     data: function() {
-//       return {
-//           output:[],
-//           info:[],
-//           error: [],
-//           numberoffollower:[],
-//           following: null,
-//       };
-//     },
-//      methods:{
-//         reload(){
-//             let self = this;
-//             let userid = this.$route.params.userid;
-//             fetch("/api/users/"+userid+"/posts", { 
-//                 method: 'GET',
-//                 'headers': {
-//                     'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                     'X-CSRFToken': token
-//                 },
-//                 credentials: 'same-origin'
-//             })
-//                 .then(function (response) {
-//                 return response.json();
-//                 })
-//                 .then(function (jsonResponse) {
-//                 // display a success message
-//                 console.log(jsonResponse);
-//                 if(jsonResponse.data){
-//                     self.output = jsonResponse.data;
-//                 }
-//                 })
-//                 .catch(function (error) {
-//                 console.log(error);
-//             });
-//             fetch("/api/users/"+userid+"/", { 
-//                 method: 'GET',
-//                 'headers': {
-//                     'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                     'X-CSRFToken': token
-//                 },
-//                 credentials: 'same-origin'
-//             })
-//                 .then(function (response) {
-//                 return response.json();
-//                 })
-//                 .then(function (jsonResponse) {
-//                 // display a success message
-//                 console.log(jsonResponse);
-//                 if(jsonResponse.profile){
-//                     self.info = jsonResponse.profile;
-//                 }
-//                 if(jsonResponse.isuser){
-//                     self.isuser = jsonResponse.isuser;
-//                 }else{
-//                     self.isuser = false;
-//                 }
-//                 })
-//                 .catch(function (error) {
-//                 console.log(error);
-//             });
-//             fetch("/api/users/"+userid+"/followersnumber", { 
-//             method: 'GET',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             if(jsonResponse.follower){
-//                 self.numberoffollower = jsonResponse.follower;
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//         });
-//         fetch("/api/users/"+userid+"/following", { 
-//             method: 'GET',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//         })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             let follow = jsonResponse.following
-//             if(follow==false){
-//                 console.log(follow);
-//                 self.following = false;
-//             }else{
-//                 self.following = true;
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//             });
-//         },
-//         follow(){
-//             let self = this;
-//             let userid = this.$route.params.userid;
-//             fetch("/api/users/"+userid+"/follow", { 
-//             method: 'POST',
-//             'headers': {
-//                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                 'X-CSRFToken': token
-//             },
-//             credentials: 'same-origin'
-//             })
-//             .then(function (response) {
-//             return response.json();
-//             })
-//             .then(function (jsonResponse) {
-//             // display a success message
-//             console.log(jsonResponse);
-//             if(jsonResponse.message){
-//                 let message = jsonResponse.message;
-//                 alert(message);
-//                 self.following = true;
-//             }else{
-//                 alert("Failed to follow user");
-//             }
-//             })
-//             .catch(function (error) {
-//             console.log(error);
-//             });
-//         }
-//     }
+     template:`
+        <div>
+            <div v-if="uc==''">
+                <p>Please login or sign-up to benefit from this Feature </p>
+             </div>
+            <div v-else class="Frame2"> 
+              <div class="en1">
+                  <div class="s">
+                     <img v-bind:src="user.profile_photo" alt="profile picture" style="width:200px;height:200px;padding-bottom:10px;padding-right:10px;">
+                   </div>
+                  <div class="se">
+                    <div class="space">
+                       <h5>{{user.firstname}}&nbsp{{user.lastname}}</h5>
+                    </div>
+                    <div>
+                     {{user.location}}
+                    </div>
+                    <div class="space">
+                    Member since {{user.joined_on}}
+                    </div>
+                    <div>
+                    {{user.biography}}
+                    </div>
+                   </div>
+                  <div class="see">
+                     <div class="">
+                      <span class="postscount">{{post}} <br>Posts</span>
+                      <span class="followscount">{{follow}}<br> Followers</span>
+                     </div>
+                     <div class="space1">
+                      <br> <button class="btn btn-primary but butsize1" @click="Follow">Follow</button> 
+                     </div>
+                    </div>
+               </div>
+               <div class="userpic">
+                <ul class="profilepost__list">
+                    <li v-for="post in user.posts"class="post_item" >
+                     <div class="">
+                     <img v-bind:src="post.photo" alt="Post image" style="width:200px;height:200px;"/>
+                     </div>
+                    </li>
+                </ul>
+               </div>
+              </div>
+                 
+            </div>
+        </div>
+        `,
+    data: function() {
+      return {
+          user:[],
+          uc:User_id,
+          post:[],
+          follow:[]
+      };
+    },
+    created: function(){
+        let self =this;
+        let userid = ""+self.uc;
+        fetch('/api/users/'+userid+'/posts',{
+                method:'GET',
+                headers:{
+                    'X-CSRFToken':token
+                },
+                credentials: 'same-origin'
+            })
+             .then(function(response){
+                  return response.json();
+              })
+              .then(function(jsonResponse){
+                  //display a success message
+                  self.user= jsonResponse; 
+                  console.log(jsonResponse);
+              })
+              .catch(function(error){
+                  console.log(error);
+              });
+    },
+    methods:{
+        Follow:function(){
+            let self = this;
+            let userid = ""+self.uc;
+            fetch("/api/users/"+userid+"/follow", { 
+            method: 'POST',
+            'headers': {
+                'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                'X-CSRFToken': token
+            },
+            credentials: 'same-origin'
+            })
+            .then(function (response) {
+            return response.json();
+            })
+            .then(function (jsonResponse) {
+            // display a success message
+            console.log(jsonResponse);
+            })
+            .catch(function (error) {
+             console.log(error);
+            });
+        }
+    }
 });
-    
+  
 const Post=Vue.component('post',{
-//      template:`
-//     <div class="fix-register ">
-//     <div class="layout border-style">
-//         <ul id = "message">
-//             <li v-for="resp in response" class="list alert alert-success">
-//                       {{ resp.message }}
-//             </li>
-//             <li v-for="resp in error"class="list alert alert-danger">
-//                 {{resp.errors[0]}} <br>
-//                 {{resp.errors[1]}} <br>
-//             </li>
-//         </ul>
-//           <form id="postforms" @submit.prevent="make_post" method="POST" >
-//               <p class="label_bold">Photo</p>
-//                     <div class="row photo">
-//                         <div class="upload-btn-wrapper">
-//                             <button id="btn">Browse</button>
-//                             <input type="file" name="photo"/>
-//                         </div>
-//                     </div>
-//               <div class="row">
-//                     <div class="col-md-11">
-//                         <div class="form-group">
-//                               <label class="label_bold" for="msg">Caption </label>
-//                               <textarea type='text' id='usrname' name='caption' placeholder="Write a caption..."class="form-control"/></textarea>
-//                         </div>
-//                     </div>
-//               </div>
-//               <div class="row">
-//                   <div class="col-md-11">
-//                       <button id="submit" class="btn btn-login">Submit</button>
-//                   </div>
-//               </div>
-//           </form>
-//       </div>
-//       </div>`,
-//     data: function() {
-//       return {
-//           response: [],
-//           error: []
-//       };
-//     },
-//     methods: {
-//         make_post: function () {
-//             let self = this;
-//             let loginforms = document.getElementById('postforms');
-//             let form_data = new FormData(postforms);
-//             let userid = localStorage.getItem('userid');
-//             fetch("/api/users/"+userid+"/posts", { 
-//                 method: 'POST', 
-//                 body: form_data,
-//                 'headers': {
-//                     'Authorization': 'Bearer ' + localStorage.getItem('token'),
-//                     'X-CSRFToken': token
-//                 },
-//                 credentials: 'same-origin'
-//             })
-//                 .then(function (response) {
-//                 return response.json();
-//                 })
-//                 .then(function (jsonResponse) {
-//                 // display a success message
-//                 console.log(jsonResponse);
-//                 if(jsonResponse.message){
-//                     let message = jsonResponse.message;
-//                     self.$router.push('/explore');
-//                 } else{
-//                     self.error = jsonResponse.errors;
-//                 }
-//                 })
-//                 .catch(function (error) {
-//                 console.log(error);
-//             });
-//         }
-//     }
+     template:`
+     <div>
+        <div v-if="uc==''">
+           <p>Please login or sign-up to benefit from this Feature </p>
+        </div>
+       <div v-else class="Frame">
+       <h1 class="b">New Post </h1>
+        <form class="form" id="post"  @submit.prevent="PostForm" method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-lg-11">
+                    <div class="form-group">
+                      <label class="label_bold">Photo</label>
+                      <input type="file" name="photo"/>
+                    </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-11">
+                        <div class="form-group">
+                            <label class="label_bold"> Caption </label>
+                            <textarea name="caption" class="form-control" placeholder="Write a Caption..."/></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-11">
+                        <button class="btn btn-primary greenbut butsize1" type="submit">Submit</button>
+                    </div>
+                </div>
+            </form>
+         </div> 
+     </div>`,
+     data: function() {
+       return {
+           uc:User_id,
+           error: []
+       };
+    },
+      methods:{
+        PostForm: function(){
+            let self = this;
+            let postForm= document.getElementById('post');
+            let form_data = new FormData(postForm);
+    
+            let userid = ""+self.uc;
+            fetch('/api/users/'+userid+'/posts',{
+                method:'POST',
+                body: form_data,
+                headers:{
+                    'X-CSRFToken': token
+                },
+                credentials: 'same-origin'
+              })
+              .then(function(response){
+                  return response.json();
+              })
+              .then(function(jsonResponse){
+                  //display a success message
+                  console.log(jsonResponse);
+                  if(jsonResponse.message=="Successfully created a new post")
+                  {
+                    window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/explore";
+                  }
+              })
+              .catch(function(error){
+                  console.log(error);
+              });
+        }
+    }
 });
 
 

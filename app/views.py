@@ -9,12 +9,12 @@ import datetime
 # import jwt 
 # import base64
 from app import app, db, login_manager
-from flask import render_template, request, redirect, url_for, flash, jsonify #g
+from flask import render_template, request, redirect, url_for, flash, jsonify,json #g
 # from flask import _request_ctx_stack 
 from flask_login import login_user, logout_user, current_user, login_required
 from forms import RegistrationForm, LoginForm, PostForm 
 # from functools import wraps 
-from models import UserProfile
+from models import UserProfile, UserPosts, UserFollows, UserLikes
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash,generate_password_hash
 
@@ -98,8 +98,7 @@ def register():
                 db.session.add(user)
                 db.session.commit()
                 flash('Registration was successfully', 'success')
-                password=generate_password_hash(password, method='pbkdf2:sha256')
-                return jsonify({"message":" User successfully registered","username":username,"password":password,"confirmpassword":password,"firstname":fname,"lastname":lname,"gender":gender,"location":location,"email":email,"biography":bio,"filename":photo,"join date":date})
+                return jsonify({"message":"User successfully registered","user":user.id})
             else:
                 flash("Password and Confirmpassword don't match", 'danger')
                 return jsonify({"message":"Password and Confirmpassword don't match"})
@@ -113,11 +112,6 @@ def register():
 
 @app.route('/api/auth/login',methods=['POST'])
 def login():
-    if current_user.is_authenticated:
-        # if user is already logged in, just redirect them to our secure page
-        # or some other page like a dashboard
-         return jsonify({"errors":"You are already login"})
-
     # Here we use a class of some kind to represent and validate our
     # client-side form data. For example, WTForms is a library that will
     # handle this for us, and we use a custom LoginForm to validate.
@@ -141,7 +135,7 @@ def login():
             # then login the user and create the user session.
             # user should be an instance of your `User` class
             login_user(user, remember=remember_me)
-            return jsonify({"userid":user.id,"username":username})
+            return jsonify({"token":"wdsd","message":"login was successfully","user":user.id})
             
         else:
             flash('Username or Password is incorrect.', 'danger')
@@ -154,78 +148,98 @@ def login():
 @login_required
 def logout():
     """logout users"""
-    logout_user()  
-    logout={"message": " User successfully logged out"}
-    return jsonify(logout)
+    if request.method == 'GET':
+        logout_user()  
+        logout={"message": "User successfully logged out"}
+        return jsonify(logout)
+    return jsonify({"errors":"not logout"})
 
 
-# @app.route('/api/users/{user_id}/posts',methods=["POST","GET"]) 
-# @requires_auth
-# def posts():
-#     """used for adding posts to the users feed"""
-#     form=PostForm()
-#     if request.method == 'POST' and form.validate_on_submit():
-#         pass
-#     """return a user's posts"""
-#     if request.method == 'GET' and form.validate_on_submit():
-#         pass
-    
-
-# @app.route('/api/users/{user_id}/follow',methods=['POST'])
-# @requires_auth
-# def follow(user_id):
-#     """create a follow relationship between the current user and the target user."""
-#     user = Users.query.filter_by(user_id=user.id).first()
-#     if user is None:
-#         return jsonify ({'message':'Register to become a user' })
-#     if user == g.current_user:
-#         return jsonify ({'message': 'Please a valid user to follow'})
-#     followID = user_id
-#     userID = g.current_user['id']
-#     follow = Follows(userID = userID, followerID = followID)
-#     db.session.add(follow)
-#     db.session.commit(follow)
-#     return jsonify ({'message': 'You followed '},user_id)
-
-# @app.route('/api/posts',methods=['GET']) 
-# @requires_auth
-# def get_AllPost():
-#     """return all post for all users."""
-#     pass 
-
-# @app.route('/api/posts/{post_id}/like',methods=['POST'])
-# @requires_auth
-# def like(post_id):
-#     """ set a like on the current post by the logged in user"""
-    
-    
-#     post = Posts.query.filter_by(post_id).first()
-    
-#     if not post:
-#         return jsonify({'message':'post does not exist'})
+@app.route('/api/users/<user_id>/posts',methods=["POST","GET"]) 
+#@requires_auth
+@login_required
+def post(user_id):
+    """used for adding posts to the users feed"""
+    form=PostForm()
+    id=int(user_id)
+    now = datetime.datetime.now()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            photo=form.photo.data
+            caption= form.caption.data
+            filename = secure_filename(photo.filename)
+            photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            photo="/static/uploads"+photo.filename
+            date=now.strftime("%B %d, %Y")
+            user=UserPosts(user_id,photo,caption,date)
+            db.session.add(user)
+            db.session.commit()
+            return jsonify({"message":"Successfully created a new post"})
+        else:
+            return jsonify({"errors":form_errors(form)})
+    if request.method == 'GET':
+        u=[]
+        userdetail =UserProfile.query.filter_by(id=id).first()
+        Users =UserPosts.query.filter_by(user_id=id).all()
+        for user in Users:
+            u.append({'id':user.id,'user_id':user.user_id,'photo':user.photo,'caption':user.caption,
+            'created_on':user.created_on,'likes':0})
+        return jsonify({"id":user_id ,"username":userdetail.username,"firstname":userdetail.first_name,
+        "lastname":userdetail.last_name,"email":userdetail.email,"location": userdetail.location,"biography":userdetail.biography,
+        "profile_photo":userdetail.profile_photo,"joined_on":userdetail.joined_on,"posts":u})
+    else:
+         return jsonify({"errors":"unable to create link"})
         
-#     user_id = g.current_user['id']
-#     post_id = post
-#     like = Likes(userID = user_id, postID = post_id)
-#     db.session.add(like)
-#     db.session.commit(like)
     
-#     total_likes = len(Likes.query.filter_by(postid = post_id).all())
-#     return jsonify ({'message': 'You liked a user post','likes':total_likes})
-    
-#     """
-#     return jsonify({"message":"File Upload Successful","file":photo,"description":description})
-#     else:
-#         return jsonify({"errors":form_errors(form)})
-#     """
-#     pass
 
-# @app.route('/secure-page')
+@app.route('/api/users/<user_id>/follow',methods=['POST'])
+@login_required
 # @requires_auth
-# def secure_page():
-#     """Render a secure page on our website that only logged in users can access."""
-#     return render_template('secure_page.html')
+def follow(user_id): 
+    """create a follow relationship between the current user and the target user."""
+    if request.method == 'POST':
+        current_user=user_id[0]
+        target_user=user_id[1]
+        #user = Users.query.filter_by(user_id=user.id).first()
+        follow = UserFollows(target_user,current_user)
+        db.session.add(follow)
+        db.session.commit(follow)
+        return jsonify ({'message': 'You followed '+target_user})
+    return jsonify ({'error': 'unable to create link'})
+    
 
+@app.route('/api/posts',methods=['GET']) 
+@login_required
+#@requires_auth
+def get_AllPost():
+    """return all post for all users."""
+    if request.method == 'GET':
+        u=[]
+        Users= UserPosts.query.order_by(UserPosts.user_id).all()
+        for user in Users:
+            userdetail =UserProfile.query.filter_by(id=user.user_id).first()
+            u.append({'id':user.id,'user_id':user.user_id,'postphoto':user.photo,'caption':user.caption,
+            'created_on':user.created_on,'likes':0,"username":userdetail.username,"userpro":userdetail.profile_photo})
+        return jsonify ({'post': u})
+    return jsonify ({'error': 'unable to create link'})
+        
+    
+
+@app.route('/api/posts/<post_id>/like',methods=['POST'])
+@login_required
+#@requires_auth
+def like(post_id):
+    """ set a like on the current post by the logged in user"""
+    if request.method == 'POST':
+        user_id=post_id[0]
+        post=post_id[1]
+        #post = Posts.query.filter_by(post_id).first()
+        like = UserLikes(user_id,post)
+        db.session.add(like)
+        db.session.commit(like)
+        #total_likes = len(Likes.query.filter_by(postid = post_id).all())
+        return jsonify ({'message': 'You liked a user post'}) #,'likes':total_likes})
+    return jsonify ({'error': 'unable to create link'})
 
 @login_manager.user_loader
 def load_user(id):
