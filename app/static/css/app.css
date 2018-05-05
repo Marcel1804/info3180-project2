@@ -201,6 +201,11 @@ input,textarea,select{
      text-align: center;
      background-color: red;
  }
+ .error2{
+     text-align: center;
+     background-color: red;
+     height: 20px;
+ }
  .fixme{
     padding-top:10px;
     padding-left:10px;

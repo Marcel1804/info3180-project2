@@ -25,7 +25,7 @@ Vue.component('app-header', {
                      <router-link to="/explore" class="nav-link" >Explore</router-link>
              </li>
              <li class="nav-item active" @click="check">
-                     <router-link to="/users/{user_id}" class="nav-link">My Profile</router-link>
+                     <router-link to="/users/:user_id" class="nav-link">My Profile</router-link>
              </li>
              <li v-if="conn=='yes'" class="nav-item active">
               <router-link class="nav-link" to="/logout">Logout</router-link>
