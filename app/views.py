@@ -180,17 +180,20 @@ def post(user_id):
             return jsonify({"errors":form_errors(form)})
     if request.method == 'GET':
         u=[]
+        f=[]
         userdetail =UserProfile.query.filter_by(id=id).first()
         Users =UserPosts.query.filter_by(user_id=id).all()
         length=len(Users)
-        follow=len(UserFollows.query.filter_by(user_id=id).all())
-        
+        followers=UserFollows.query.filter_by(user_id=id).all()
+        follow=len(followers)
+        for follower in followers:
+            f.append(follower.follower_id)
         for user in Users:
             u.append({'id':user.id,'user_id':user.user_id,'photo':user.photo,'caption':user.caption,
             'created_on':user.created_on,'likes':0})
         return jsonify({"id":user_id ,"username":userdetail.username,"firstname":userdetail.first_name,
         "lastname":userdetail.last_name,"email":userdetail.email,"location": userdetail.location,"biography":userdetail.biography,
-        "profile_photo":userdetail.profile_photo,"joined_on":userdetail.joined_on,"posts":u,"numpost":length,"numfollower":follow})
+        "profile_photo":userdetail.profile_photo,"joined_on":userdetail.joined_on,"posts":u,"numpost":length,"numfollower":follow,"follower":f})
     else:
          return jsonify({"errors":"unable to create link"})
         

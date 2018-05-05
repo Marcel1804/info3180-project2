@@ -47,7 +47,8 @@ Vue.component('app-header', {
         check:function(){
             self=this;
             other='';
-           window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/users/"+User_id;
+            self.$router.push("/users/"+User_id);
+           "/users/"+User_id;
         }
     },
     created: function(){
@@ -232,9 +233,8 @@ const Register=Vue.component('register',{
                   if(jsonResponse.message=="User successfully registered")
                       {
                         User_id=jsonResponse.user;
-                        window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/users/"+User_id;
+                        self.$router.push("/users/"+User_id);
                         con='yes';
-                        header;
                       }
                   console.log(jsonResponse);
               })
@@ -287,7 +287,7 @@ const Login=Vue.component('login',{
                   if(jsonResponse.message=="login was successfully")
                   {
                     User_id=jsonResponse.user; 
-                    window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/explore";
+                    self.$router.push("/explore");
                     con='yes';
                   }
               })
@@ -337,7 +337,7 @@ const Explore=Vue.component('explore',{
             <p>Please login or sign-up to benefit from this Feature </p>
         </div>
         <div v-else>
-            <div>
+            <div class ="Frame2">
                     <h2 ></h2>
                      <ul class="posts__list">
                         <li v-for="user in users"class="post_item" v-if="uc!=user.user_id">
@@ -389,8 +389,9 @@ const Explore=Vue.component('explore',{
         },
     methods:{
         post:function(userp){
+                let self=this;
                 other=""+userp;
-                window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/users/"+other;
+                self.$router.push("/users/"+other);
         },
         Like:function(postid){
             let self=this;
@@ -458,7 +459,8 @@ const Users=Vue.component('users',{
                      <div class="space1">
                       <br> 
                       <span v-if="uc==user.id"><button class="btn btn-primary but butsize1 hid">Follow</button></span>
-                      <span v-else><button class="btn btn-primary but butsize1" @click="Follow">Follow</button></span>
+                      <span v-else-if="uc in user.follower"><button class="btn btn-primary but butsize1">Following</button></span>
+                      <span v-else><button class="btn btn-primary but butsize1" @click="Follow" id="fo">Follow</button></span>
                      </div>
                     </div>
                </div>
@@ -556,6 +558,7 @@ const Users=Vue.component('users',{
             // display a success message
             console.log(jsonResponse);
             let loginForm= document.getElementById('follow').innerHTML=jsonResponse.follow;
+            let log= document.getElementById('fo').innerText="following";
             })
             .catch(function (error) {
              console.log(error);
@@ -626,7 +629,7 @@ const Post=Vue.component('post',{
                   console.log(jsonResponse);
                   if(jsonResponse.message=="Successfully created a new post")
                   {
-                    window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/explore";
+                    self.$router.push("/explore");
                   }
               })
               .catch(function(error){
