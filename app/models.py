@@ -57,7 +57,7 @@ class UserPosts(db.Model):
     # user_profile (singular) table, but if we specify __tablename__ we can change it
     # to `user_profiles` or some other name.
     
-    __tablename__ = 'posts'
+    __tablename__ ='posts'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id=db.Column(db.Integer)
