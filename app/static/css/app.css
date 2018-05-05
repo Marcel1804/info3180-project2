@@ -113,7 +113,7 @@ input,textarea,select{
  }
 .posts__list{ 
     display: grid;  
-    grid-template-columns: 800px;
+    grid-template-columns: 824px;
     grid-columns-gap: 10px;  
     grid-row-gap: 10px;
     list-style-type: none; 
@@ -196,4 +196,18 @@ input,textarea,select{
      width:1060px;
      height: 800px;
      overflow:auto;
+ }
+ .error{
+     text-align: center;
+     background-color: red;
+ }
+ .fixme{
+    padding-top:10px;
+    padding-left:10px;
+ }
+ .hid{
+     visibility: hidden;
+ }
+ #home{
+     text-align:center;   
  }

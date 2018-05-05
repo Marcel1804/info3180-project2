@@ -86,8 +86,9 @@ def register():
         bio=form.bio.data
         photo=form.photo.data
         filename = secure_filename(photo.filename)
+
         photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        photo=photo.filename
+        photo='/static/uploads/'+ filename
         date=now.strftime("%B %d, %Y")
         
         user = UserProfile.query.filter_by(username=username).first()
@@ -169,7 +170,7 @@ def post(user_id):
             caption= form.caption.data
             filename = secure_filename(photo.filename)
             photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            photo="/static/uploads"+photo.filename
+            photo='/static/uploads/'+ filename
             date=now.strftime("%B %d, %Y")
             user=UserPosts(user_id,photo,caption,date)
             db.session.add(user)
@@ -181,12 +182,15 @@ def post(user_id):
         u=[]
         userdetail =UserProfile.query.filter_by(id=id).first()
         Users =UserPosts.query.filter_by(user_id=id).all()
+        length=len(Users)
+        follow=len(UserFollows.query.filter_by(user_id=id).all())
+        
         for user in Users:
             u.append({'id':user.id,'user_id':user.user_id,'photo':user.photo,'caption':user.caption,
             'created_on':user.created_on,'likes':0})
         return jsonify({"id":user_id ,"username":userdetail.username,"firstname":userdetail.first_name,
         "lastname":userdetail.last_name,"email":userdetail.email,"location": userdetail.location,"biography":userdetail.biography,
-        "profile_photo":userdetail.profile_photo,"joined_on":userdetail.joined_on,"posts":u})
+        "profile_photo":userdetail.profile_photo,"joined_on":userdetail.joined_on,"posts":u,"numpost":length,"numfollower":follow})
     else:
          return jsonify({"errors":"unable to create link"})
         
@@ -198,14 +202,27 @@ def post(user_id):
 def follow(user_id): 
     """create a follow relationship between the current user and the target user."""
     if request.method == 'POST':
-        current_user=user_id[0]
-        target_user=user_id[1]
-        #user = Users.query.filter_by(user_id=user.id).first()
-        follow = UserFollows(target_user,current_user)
-        db.session.add(follow)
-        db.session.commit(follow)
-        return jsonify ({'message': 'You followed '+target_user})
-    return jsonify ({'error': 'unable to create link'})
+        target_user=int(request.form['user_id'])
+        current_user=int(request.form['follower_id'])
+        follows=UserFollows.query.filter_by(user_id=target_user).all()
+        check=''
+        for follow in follows:
+            if current_user==follow.follower_id:
+                check=1
+                
+        if check!=1:
+            follow = UserFollows(target_user,current_user)
+            db.session.add(follow)
+            db.session.commit()
+            user = UserProfile.query.filter_by(id=target_user).first()
+            msg="You are now following that user."+ user.username
+            numfollow=len(UserFollows.query.filter_by(user_id=target_user).all())
+            return jsonify ({"message":msg,"follow":numfollow}) 
+        else:
+            numfollow=len(UserFollows.query.filter_by(user_id=target_user).all())
+            return jsonify ({"message":"You are already following that user.","follow":numfollow}) 
+    else:
+        return jsonify ({'error': 'unable to create link'})
     
 
 @app.route('/api/posts',methods=['GET']) 
@@ -218,12 +235,11 @@ def get_AllPost():
         Users= UserPosts.query.order_by(UserPosts.user_id).all()
         for user in Users:
             userdetail =UserProfile.query.filter_by(id=user.user_id).first()
+            userlike = len(UserLikes.query.filter_by(post_id=user.id).all())
             u.append({'id':user.id,'user_id':user.user_id,'postphoto':user.photo,'caption':user.caption,
-            'created_on':user.created_on,'likes':0,"username":userdetail.username,"userpro":userdetail.profile_photo})
+            'created_on':user.created_on,'likes':userlike,"username":userdetail.username,"userpro":userdetail.profile_photo})
         return jsonify ({'post': u})
     return jsonify ({'error': 'unable to create link'})
-        
-    
 
 @app.route('/api/posts/<post_id>/like',methods=['POST'])
 @login_required
@@ -231,14 +247,13 @@ def get_AllPost():
 def like(post_id):
     """ set a like on the current post by the logged in user"""
     if request.method == 'POST':
-        user_id=post_id[0]
-        post=post_id[1]
-        #post = Posts.query.filter_by(post_id).first()
+        user_id=int(request.form['user_id'])
+        post=int(request.form['post_id'])
         like = UserLikes(user_id,post)
         db.session.add(like)
-        db.session.commit(like)
-        #total_likes = len(Likes.query.filter_by(postid = post_id).all())
-        return jsonify ({'message': 'You liked a user post'}) #,'likes':total_likes})
+        db.session.commit()
+        total_likes = len(UserLikes.query.filter_by(post_id=post).all())
+        return jsonify ({'message': 'You liked a user post','likes':total_likes})
     return jsonify ({'error': 'unable to create link'})
 
 @login_manager.user_loader

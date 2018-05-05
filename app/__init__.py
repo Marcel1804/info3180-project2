@@ -13,7 +13,7 @@ app.config['SECRET_KEY'] = "372ijma/.D/V,A,KK,ASK,1mejlADK\S][SP;SLKK2I231JHRMWG
 app.config['SQLALCHEMY_DATABASE_URI'] ="postgresql://ustaqcoxtljgro:154b9810327ba112b8b304a6d85d65bda6c1b4d57e33f3fa67bd19faece800f7@ec2-54-235-193-34.compute-1.amazonaws.com:5432/d1vs18emf9erhe"
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True  # added just to suppress a warning
-app.config['UPLOAD_FOLDER']= "./app/static/uploads" # using a config value
+app.config['UPLOAD_FOLDER']= "./app/static/uploads/" # using a config value
 
 db = SQLAlchemy(app)
 

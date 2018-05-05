@@ -1,6 +1,8 @@
 /* Add your Application JavaScript */
-let con='no';
+
+let con='';
 let User_id='';
+let other='';
 
 Vue.component('app-header', {
     template: `
@@ -22,7 +24,7 @@ Vue.component('app-header', {
             <li class="nav-item active">
                      <router-link to="/explore" class="nav-link" >Explore</router-link>
              </li>
-             <li class="nav-item active">
+             <li class="nav-item active" @click="check">
                      <router-link to="/users/{user_id}" class="nav-link">My Profile</router-link>
              </li>
              <li v-if="conn=='yes'" class="nav-item active">
@@ -36,11 +38,23 @@ Vue.component('app-header', {
     </nav>
     `,
     data: function() {
+        console.log("try",con);
        return {
-           conn:con
+           conn:[]
        };
+    },
+    methods:{
+        check:function(){
+            self=this;
+            other='';
+           window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/users/"+User_id;
+        }
+    },
+    created: function(){
+        let self =this;
+         self.conn=con;
     }
-});
+}); 
 
 Vue.component('app-footer', {
     template: `
@@ -59,24 +73,37 @@ Vue.component('app-footer', {
 
 const Home = Vue.component('home', {
         template: `
-         <div class="Frame">
-          <div class="homePic">
-          <img src="/static/uploads/background/pic.jpg" alt="home page picture" style="width:400px;height:400px;"/>
-          </div>
-           <div class="Welcome">
-           <div class="padtext">
-             <h1><img src="/static/uploads/pic.jpg" alt="home page picture" style="width:20px;height:20px;"/> Photogram</h1>
-            </div>
-            <div class="pad">
-             <p> Share photos of your favourite moments with friends, family and the world.</p> 
-            </div>
-            <div>
-             <router-link to="/register" class="btn btn-primary greenbut">Register</router-link>&nbsp
-             <router-link to="/login" class="btn btn-primary butsize">login</router-link>
-            </div>
-           </div>
+        <div>
+              <div v-if="uc!=''" id="home">
+               <h1> Welcome to Photogram </h1>
+                <p> Where moments can be share instance.<br>So Please enjoy</p><br>
+                <p> Any issues you have may feel free to contact us Group 18 inc.</p>
+              </div>
+                 
+             <div v-else class="Frame">
+              <div class="homePic">
+              <img src="/static/uploads/background/pic.jpg" alt="home page picture" style="width:400px;height:400px;"/>
+              </div>
+               <div class="Welcome">
+               <div class="padtext">
+                 <h1><img src="/static/uploads/pic.jpg" alt="home page picture" style="width:20px;height:20px;"/> Photogram</h1>
+                </div>
+                <div class="pad">
+                 <p> Share photos of your favourite moments with friends, family and the world.</p> 
+                </div>
+                <div>
+                 <router-link to="/register" class="btn btn-primary greenbut">Register</router-link>&nbsp
+                 <router-link to="/login" class="btn btn-primary butsize">login</router-link>
+                </div>
+               </div>
+               </div>
         </div>
-         `
+         `,
+    data: function(){
+        return{
+            uc:User_id
+        };   
+        }
     });
 
 const Register=Vue.component('register',{
@@ -204,9 +231,10 @@ const Register=Vue.component('register',{
                   //display a success message
                   if(jsonResponse.message=="User successfully registered")
                       {
-                        window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/users/{user_id}";
                         User_id=jsonResponse.user;
+                        window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/users/"+User_id;
                         con='yes';
+                        header;
                       }
                   console.log(jsonResponse);
               })
@@ -258,8 +286,8 @@ const Login=Vue.component('login',{
                   console.log(jsonResponse);
                   if(jsonResponse.message=="login was successfully")
                   {
+                    User_id=jsonResponse.user; 
                     window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/explore";
-                    User_id=jsonResponse.user;
                     con='yes';
                   }
               })
@@ -301,26 +329,28 @@ const Logout= Vue.component('logout-form', {
         });
     }
 });
-   
+  
 const Explore=Vue.component('explore',{
      template: `
-    <div >
-        <div v-if="uc==''">
+    <div>
+        <div v-if="uc==''" class="error">
             <p>Please login or sign-up to benefit from this Feature </p>
         </div>
-        <div v-else >
+        <div v-else>
             <div>
                     <h2 ></h2>
                      <ul class="posts__list">
-                        <li v-for="user in users"class="post_item" >
+                        <li v-for="user in users"class="post_item" v-if="uc!=user.user_id">
+                            <div>
                              <div class="space3">
-                             <h6><img v-bind:src="user.userpro" alt="User Profile picture" style="width:20px;height:20px;"/> {{user.username}}</h6>
-                             <img v-bind:src="user.postphoto" alt="Post image" style="width:800px;height:200px;"/>
+                             <span @click="post(user.user_id)"><h6 class="fixme" ><img v-bind:src="user.userpro" alt="User Profile picture" style="width:20px;height:20px;"/> {{user.username}}</h6></span>
+                             <img v-bind:src="user.postphoto" alt="Post image" style="width:800px;height:400px;"/>
                              <br>
-                                {{user.caption}}
+                               <span class="fixme"> {{user.caption}}</span>
                              </div>
                              <div>
-                               <span> <img src="/static/uploads/like.jpg" alt="like icon" style="width:20px;height:20px;"/> {{like}} Likes </span><span class="space2"> {{user.created_on}}</span>
+                               <span @click="Like(user.id)"> <img src="/static/uploads/like.jpg" alt="like icon" style="width:20px;height:20px;"/> <span v-bind:id="user.id">{{user.likes}}</span> Likes </span><span class="space2"> {{user.created_on}}</span>
+                            </div>
                             </div>
                         </li>
                 </ul>
@@ -328,7 +358,7 @@ const Explore=Vue.component('explore',{
             <div class="postbut ">
                 <router-link class="btn btn-primary butsize1" to="/post/new">New Post</router-link>
             </div>
-        </div>
+          </div>
     </div>`,
      created: function(){
         let self =this;
@@ -354,18 +384,53 @@ const Explore=Vue.component('explore',{
     data: function(){
         return{
             users:[],
-            uc:User_id,
-            like:[]
+            uc:User_id
         };   
-        }
+        },
+    methods:{
+        post:function(userp){
+                other=""+userp;
+                window.location.href ="http://info3180-project2-marcel1804.c9users.io:8080/#/users/"+other;
+        },
+        Like:function(postid){
+            let self=this;
+            let post=""+postid;
+            let form_data = new FormData();
+            let se=self.uc;
+            form_data.append("user_id",se);
+            form_data.append("post_id",post);
+               
+            fetch('/api/posts/'+post+'/like',{
+                    method:'POST',
+                    body: form_data,
+                    headers:{
+                        'X-CSRFToken':token
+                    },
+                    credentials: 'same-origin'
+                })
+                 .then(function(response){
+                      return response.json();
+                  })
+                  .then(function(jsonResponse){
+                      //display a success message
+                      //self.users = jsonResponse.post;
+                      console.log(jsonResponse);
+                      let loginForm= document.getElementById(postid).innerHTML=jsonResponse.likes;
+                  })
+                  .catch(function(error){
+                      console.log(error);
+                  });
+            }
+    }
 });
-    
+
 const Users=Vue.component('users',{
      template:`
         <div>
-            <div v-if="uc==''">
+            <div v-if="uc==''" class="error">
                 <p>Please login or sign-up to benefit from this Feature </p>
-             </div>
+            </div>
+            
             <div v-else class="Frame2"> 
               <div class="en1">
                   <div class="s">
@@ -387,11 +452,13 @@ const Users=Vue.component('users',{
                    </div>
                   <div class="see">
                      <div class="">
-                      <span class="postscount">{{post}} <br>Posts</span>
-                      <span class="followscount">{{follow}}<br> Followers</span>
+                      <span class="postscount"><h6>{{user.numpost}}</h6><br>Posts</span>
+                      <span class="followscount"><h6 id="follow">{{user.numfollower}}</h6><br>Followers</span>
                      </div>
                      <div class="space1">
-                      <br> <button class="btn btn-primary but butsize1" @click="Follow">Follow</button> 
+                      <br> 
+                      <span v-if="uc==user.id"><button class="btn btn-primary but butsize1 hid">Follow</button></span>
+                      <span v-else><button class="btn btn-primary but butsize1" @click="Follow">Follow</button></span>
                      </div>
                     </div>
                </div>
@@ -399,53 +466,84 @@ const Users=Vue.component('users',{
                 <ul class="profilepost__list">
                     <li v-for="post in user.posts"class="post_item" >
                      <div class="">
-                     <img v-bind:src="post.photo" alt="Post image" style="width:200px;height:200px;"/>
+                     <img v-bind:src="post.photo" alt="Post image" style="width:340px;height:200px;"/>
                      </div>
                     </li>
                 </ul>
                </div>
               </div>
-                 
-            </div>
+           </div>
         </div>
         `,
     data: function() {
       return {
           user:[],
           uc:User_id,
+          Other:other,
           post:[],
           follow:[]
       };
     },
     created: function(){
-        let self =this;
-        let userid = ""+self.uc;
-        fetch('/api/users/'+userid+'/posts',{
-                method:'GET',
-                headers:{
-                    'X-CSRFToken':token
-                },
-                credentials: 'same-origin'
-            })
-             .then(function(response){
-                  return response.json();
-              })
-              .then(function(jsonResponse){
-                  //display a success message
-                  self.user= jsonResponse; 
-                  console.log(jsonResponse);
-              })
-              .catch(function(error){
-                  console.log(error);
-              });
+        if (other==''){
+                let self =this;
+                let userid = ""+self.uc;
+                fetch('/api/users/'+userid+'/posts',{
+                        method:'GET',
+                        headers:{
+                            'X-CSRFToken':token
+                        },
+                        credentials: 'same-origin'
+                    })
+                     .then(function(response){
+                          return response.json();
+                      })
+                      .then(function(jsonResponse){
+                          //display a success message
+                          self.user= jsonResponse; 
+                          console.log(jsonResponse);
+                      })
+                      .catch(function(error){
+                          console.log(error);
+                      });
+                }
+        else{
+             let self =this;
+             let userid = ""+self.Other;
+                fetch('/api/users/'+userid+'/posts',{
+                        method:'GET',
+                        headers:{
+                            'X-CSRFToken':token
+                        },
+                        credentials: 'same-origin'
+                    })
+                     .then(function(response){
+                          return response.json();
+                      })
+                      .then(function(jsonResponse){
+                          //display a success message
+                          self.user= jsonResponse; 
+                          console.log(jsonResponse);
+                      })
+                      .catch(function(error){
+                          console.log(error);
+                      });
+                     other='';
+            }
     },
     methods:{
         Follow:function(){
             let self = this;
-            let userid = ""+self.uc;
+            let userid = ""+self.Other;
+            let form_data = new FormData();
+            let se=self.uc;
+            form_data.append("user_id",userid);
+            form_data.append("follower_id",se);
+                    
             fetch("/api/users/"+userid+"/follow", { 
             method: 'POST',
-            'headers': {
+            body: form_data,
+            headers: {
                 'Authorization': 'Bearer ' + localStorage.getItem('token'),
                 'X-CSRFToken': token
             },
@@ -457,6 +555,7 @@ const Users=Vue.component('users',{
             .then(function (jsonResponse) {
             // display a success message
             console.log(jsonResponse);
+            let loginForm= document.getElementById('follow').innerHTML=jsonResponse.follow;
             })
             .catch(function (error) {
              console.log(error);
@@ -464,11 +563,11 @@ const Users=Vue.component('users',{
         }
     }
 });
-  
+
 const Post=Vue.component('post',{
      template:`
      <div>
-        <div v-if="uc==''">
+        <div v-if="uc==''" class="error">
            <p>Please login or sign-up to benefit from this Feature </p>
         </div>
        <div v-else class="Frame">
@@ -547,7 +646,7 @@ const router = new VueRouter({
          { path: '/explore', component: Explore},
          { path: '/login' , component: Login}, 
          { path: '/logout', component: Logout},
-         { path: '/users/{user_id}', component: Users},
+         { path: '/users/:user_id', component: Users},
          { path: '/post/new', component: Post}
          ]
     });
