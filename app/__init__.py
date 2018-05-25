@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 
+
 UPLOAD_FOLDER = './app/static/uploads'
 TOKEN_SECRET = 'Thisissecret'
 

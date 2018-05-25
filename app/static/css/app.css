@@ -206,6 +206,10 @@ input,textarea,select{
      background-color: red;
      height: 20px;
  }
+ .success{
+     text-align: center;
+     background-color: green;
+ }
  .fixme{
     padding-top:10px;
     padding-left:10px;

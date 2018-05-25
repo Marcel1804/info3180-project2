@@ -1,8 +1,8 @@
 /* Add your Application JavaScript */
 
-let con='';
 let User_id='';
 let other='';
+let msg='';
 
 Vue.component('app-header', {
     template: `
@@ -11,7 +11,6 @@ Vue.component('app-header', {
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-    
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
         </ul>
@@ -25,35 +24,27 @@ Vue.component('app-header', {
                      <router-link to="/explore" class="nav-link" >Explore</router-link>
              </li>
              <li class="nav-item active" @click="check">
-                     <router-link to="/users/{user_id}" class="nav-link">My Profile</router-link>
+                     <router-link to="/users/:user_id" class="nav-link">My Profile</router-link>
              </li>
-             <li v-if="conn=='yes'" class="nav-item active">
+             <li id="logout" class="nav-item active hid">
               <router-link class="nav-link" to="/logout">Logout</router-link>
-             </li > 
-             <li v-else class="nav-item active">
-              <router-link class="nav-link" to="/login">Login</router-link>
-            </li> 
+             </li>
         </ul>
       </div>
     </nav>
     `,
-    data: function() {
-        console.log("try",con);
-       return {
-           conn:[]
-       };
-    },
     methods:{
         check:function(){
             self=this;
-            other='';
-            self.$router.push("/users/"+User_id);
-           "/users/"+User_id;
+            if(other==''){
+                self.$router.push("/users/"+User_id);
+            }
+            else{
+                other='';
+                self.$router.push("/explore");
+                setTimeout(function(){ self.$router.push("/users/"+User_id)},500);
+            }
         }
-    },
-    created: function(){
-        let self =this;
-         self.conn=con;
     }
 }); 
 
@@ -74,7 +65,9 @@ Vue.component('app-footer', {
 
 const Home = Vue.component('home', {
         template: `
-        <div>
+        <div @mouseover="Reset">
+              <h6 v-if="text=='User successfully logged out'" class="success">{{text}}</h6>
+              
               <div v-if="uc!=''" id="home">
                <h1> Welcome to Photogram </h1>
                 <p> Where moments can be share instance.<br>So Please enjoy</p><br>
@@ -102,16 +95,32 @@ const Home = Vue.component('home', {
          `,
     data: function(){
         return{
-            uc:User_id
+            uc:User_id,
+            text:msg
         };   
-        }
+        },
+     methods:{
+          Reset:function ()
+            {
+                this.text="";
+            }
+       }
     });
 
 const Register=Vue.component('register',{
      template:`
      <div>
+     <div>
+        <ul  v-for="(mgs,con, index) in msg">
+                <div v-if="con === 'errors'" >
+                    <li v-for="mgs in msg.errors" class="error">
+                      {{mgs}}
+                    </li>
+                </div>
+        </ul>
+     </div>
      <h1 class="b">&nbsp Registration </h1>
-        <form class="form" id="register" @submit.prevent="RegisterForm" method="POST" enctype="multipart/form-data">
+        <form class="form" id="register" @submit.prevent="RegisterForm" method="POST" enctype="multipart/form-data" @click="Reset">
             <div class="form-space">
                 <div class="row">
                       <div class="col-md-11">
@@ -211,6 +220,11 @@ const Register=Vue.component('register',{
             </div>
             </form>
      </div> `,
+     data: function(){
+            return{
+                msg:[]
+            }
+        },
      methods:{
         RegisterForm: function(){
             let self = this;
@@ -230,26 +244,45 @@ const Register=Vue.component('register',{
               })
               .then(function(jsonResponse){
                   //display a success message
-                  if(jsonResponse.message=="User successfully registered")
+                  if(jsonResponse.response!=null)
                       {
-                        User_id=jsonResponse.user;
-                        self.$router.push("/users/"+User_id);
-                        con='yes';
+                        msg="User successfully registered. So login now and enjoy";
+                        self.$router.push("/login");
                       }
-                  console.log(jsonResponse);
+                   else{
+                       self.msg=jsonResponse.errors['0'];
+                      }
+                  //console.log(jsonResponse);
+                  
               })
-              .catch(function(error){
-                  console.log(error);
+              .catch(function(errors){
+                  //console.log(errors);
               });
-        }
+        },
+    Reset:function ()
+    {
+        this.msg="";
     }
+    }
+    
 });
 
 const Login=Vue.component('login',{
      template:`
      <div class="Frame">
+     <div>
+        <ul  v-for="(mgs,con, index) in msg">
+                <div v-if="con === 'errors'" >
+                    <li v-for="mgs in msg.errors" class="error">
+                      {{mgs}}
+                    </li>
+                </div>
+        </ul>
+     </div>
+     
+     <h6 id="msg" v-if="text=='User successfully registered. So login now and enjoy'" class ="success">{{text}}</h6>
      <h1 class="b">Login</h1>
-     <form class="form" id="login" @submit.prevent="LoginForm" method="POST" >
+     <form class="form" id="login" @submit.prevent="LoginForm" method="POST" @click="Reset">
          <div>
          <label for="username" name="username">Username</label><br>
          <input type='text' name='username'/>
@@ -264,6 +297,12 @@ const Login=Vue.component('login',{
      </form>
      </div>
      `,
+     data: function(){
+         return{
+              msg:[],
+              text:[]
+         }
+     },
      methods:{
         LoginForm: function(){
             let self = this;
@@ -283,49 +322,69 @@ const Login=Vue.component('login',{
               })
               .then(function(jsonResponse){
                   //display a success message
-                  console.log(jsonResponse);
-                  if(jsonResponse.message=="login was successfully")
+                  //console.log(jsonResponse);
+                  if(jsonResponse.response!=null)
                   {
-                    User_id=jsonResponse.user; 
+                    User_id=jsonResponse.response["0"].user;
+                    let jwt_token=jsonResponse.response["0"].token;
+                    localStorage.setItem('token',jwt_token);
+                    localStorage.setItem('userid',User_id);
                     self.$router.push("/explore");
-                    con='yes';
+                    msg="Login was successfully";
+                    let logout= document.getElementById('logout'); 
+                    logout.classList.remove('hid');
+                  }
+                  else{
+                      self.msg=jsonResponse.errors['0'];
                   }
               })
-              .catch(function(error){
-                  console.log(error);
+              .catch(function(errors){
+                  //console.log(errors);
               });
-        }
+        },
+    Reset:function (){
+         this.text="";
+         this.msg="";
+     }
+    },
+    created: function(){
+         this.text=msg;
     }
     
 });
     
-const Logout= Vue.component('logout-form', {
+const Logout= Vue.component('logout-form',{
+    template:`<div> </div>
+    `,
     created: function() {
         let self = this;
         fetch("/api/auth/logout", { 
-            method: 'GET',
+             method: 'GET',
             'headers': {
-                'Authorization': 'Bearer ' + localStorage.getItem('token')
-            }
-        })
+                'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                 'X-CSRFToken': token
+            },
+            credentials: 'same-origin' 
+          })
             .then(function (response) {
             return response.json();
             })
-            .then(function (jsonResponse) {
+            .then(function (jsonResponse){
             // display a success message
-            console.log(jsonResponse);
-            //let message = jsonResponse.message;
-            if(jsonResponse.message=="User successfully logged out")
-            {
-                //localStorage.removeItem('token');
-                //localStorage.removeItem('userid');
-                self.$router.push('/');
-                User_id="";
-                con="no"
-            }
+            //console.log(jsonResponse);
+                if(jsonResponse.response["0"].message=="User successfully logged out")
+                 {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userid');
+                    msg="User successfully logged out";
+                    let logout= document.getElementById('logout'); 
+                    logout.classList.add('hid');
+                    User_id="";
+                    self.$router.push('/');
+                 }
             })
             .catch(function (error) {
-            console.log(error);
+            //console.log(error);
         });
     }
 });
@@ -333,11 +392,12 @@ const Logout= Vue.component('logout-form', {
 const Explore=Vue.component('explore',{
      template: `
     <div>
+        <h6 class ="success">{{text}}</h6>
         <div v-if="uc==''" class="error">
             <p>Please login or sign-up to benefit from this Feature </p>
         </div>
-        <div v-else>
-            <div class ="Frame2">
+        <div v-else @mouseover="Reset">
+            <div>
                     <h2 ></h2>
                      <ul class="posts__list">
                         <li v-for="user in users"class="post_item" v-if="uc!=user.user_id">
@@ -364,8 +424,9 @@ const Explore=Vue.component('explore',{
         let self =this;
         fetch('/api/posts',{
                 method:'GET',
-                headers:{
-                    'X-CSRFToken':token
+                'headers': {
+                'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                'X-CSRFToken': token
                 },
                 credentials: 'same-origin'
             })
@@ -374,17 +435,18 @@ const Explore=Vue.component('explore',{
               })
               .then(function(jsonResponse){
                   //display a success message
-                  self.users = jsonResponse.post; 
-                  console.log(jsonResponse);
+                  self.users = jsonResponse.response['0'].post; 
+                  //console.log(jsonResponse);
               })
               .catch(function(error){
-                  console.log(error);
+                  //console.log(error);
               });
     },
     data: function(){
         return{
             users:[],
-            uc:User_id
+            uc:User_id,
+            text:msg
         };   
         },
     methods:{
@@ -400,13 +462,14 @@ const Explore=Vue.component('explore',{
             let se=self.uc;
             form_data.append("user_id",se);
             form_data.append("post_id",post);
-               
+           
             fetch('/api/posts/'+post+'/like',{
                     method:'POST',
                     body: form_data,
-                    headers:{
-                        'X-CSRFToken':token
-                    },
+                     'headers': {
+                            'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                            'X-CSRFToken': token
+                        },
                     credentials: 'same-origin'
                 })
                  .then(function(response){
@@ -414,14 +477,16 @@ const Explore=Vue.component('explore',{
                   })
                   .then(function(jsonResponse){
                       //display a success message
-                      //self.users = jsonResponse.post;
-                      console.log(jsonResponse);
-                      let loginForm= document.getElementById(postid).innerHTML=jsonResponse.likes;
+                      //console.log(jsonResponse);
+                      let loginForm= document.getElementById(postid).innerHTML=jsonResponse.response['0'].likes;
                   })
                   .catch(function(error){
-                      console.log(error);
+                      //console.log(error);
                   });
-            }
+            },
+        Reset: function(){
+            this.text="";
+        }
     }
 });
 
@@ -459,7 +524,7 @@ const Users=Vue.component('users',{
                      <div class="space1">
                       <br> 
                       <span v-if="uc==user.id"><button class="btn btn-primary but butsize1 hid">Follow</button></span>
-                      <span v-else-if="uc in user.follower"><button class="btn btn-primary but butsize1">Following</button></span>
+                      <span v-else-if=" uc in user.follower"><button class="btn btn-primary but butsize1">Following</button></span>
                       <span v-else><button class="btn btn-primary but butsize1" @click="Follow" id="fo">Follow</button></span>
                      </div>
                     </div>
@@ -487,51 +552,52 @@ const Users=Vue.component('users',{
       };
     },
     created: function(){
-        if (other==''){
-                let self =this;
-                let userid = ""+self.uc;
-                fetch('/api/users/'+userid+'/posts',{
-                        method:'GET',
-                        headers:{
-                            'X-CSRFToken':token
-                        },
-                        credentials: 'same-origin'
-                    })
-                     .then(function(response){
-                          return response.json();
-                      })
-                      .then(function(jsonResponse){
-                          //display a success message
-                          self.user= jsonResponse; 
-                          console.log(jsonResponse);
-                      })
-                      .catch(function(error){
-                          console.log(error);
-                      });
-                }
-        else{
-             let self =this;
-             let userid = ""+self.Other;
-                fetch('/api/users/'+userid+'/posts',{
-                        method:'GET',
-                        headers:{
-                            'X-CSRFToken':token
-                        },
-                        credentials: 'same-origin'
-                    })
-                     .then(function(response){
-                          return response.json();
-                      })
-                      .then(function(jsonResponse){
-                          //display a success message
-                          self.user= jsonResponse; 
-                          console.log(jsonResponse);
-                      })
-                      .catch(function(error){
-                          console.log(error);
-                      });
-                     other='';
-            }
+                if (other==''){
+                        let self =this;
+                        let userid = ""+self.uc;
+                        fetch('/api/users/'+userid+'/posts',{
+                                method:'GET',
+                                'headers': {
+                                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                                    'X-CSRFToken': token
+                                },
+                                credentials: 'same-origin'
+                            })
+                             .then(function(response){
+                                  return response.json();
+                              })
+                              .then(function(jsonResponse){
+                                  //display a success message
+                                  self.user= jsonResponse.response["0"]; 
+                                  //console.log(jsonResponse);
+                              })
+                              .catch(function(error){
+                                 // console.log(error);
+                              });
+                        }
+                else{
+                     let self =this;
+                     let userid = ""+self.Other;
+                        fetch('/api/users/'+userid+'/posts',{
+                                method:'GET',
+                                 'headers': {
+                                           'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                                           'X-CSRFToken': token
+                                    },
+                                credentials: 'same-origin'
+                            })
+                             .then(function(response){
+                                  return response.json();
+                              })
+                              .then(function(jsonResponse){
+                                  //display a success message
+                                  self.user= jsonResponse.response["0"]; 
+                                  //console.log(jsonResponse);
+                              })
+                              .catch(function(error){
+                                 //console.log(error);
+                              });
+                    }
     },
     methods:{
         Follow:function(){
@@ -556,12 +622,12 @@ const Users=Vue.component('users',{
             })
             .then(function (jsonResponse) {
             // display a success message
-            console.log(jsonResponse);
-            let loginForm= document.getElementById('follow').innerHTML=jsonResponse.follow;
+            //console.log(jsonResponse);
+            let loginForm= document.getElementById('follow').innerHTML=jsonResponse.response['0'].follow;
             let log= document.getElementById('fo').innerText="following";
             })
             .catch(function (error) {
-             console.log(error);
+             //console.log(error);
             });
         }
     }
@@ -616,9 +682,10 @@ const Post=Vue.component('post',{
             fetch('/api/users/'+userid+'/posts',{
                 method:'POST',
                 body: form_data,
-                headers:{
-                    'X-CSRFToken': token
-                },
+                'headers': {
+                'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                'X-CSRFToken': token
+                 },
                 credentials: 'same-origin'
               })
               .then(function(response){
@@ -626,14 +693,15 @@ const Post=Vue.component('post',{
               })
               .then(function(jsonResponse){
                   //display a success message
-                  console.log(jsonResponse);
-                  if(jsonResponse.message=="Successfully created a new post")
+                  //console.log(jsonResponse);
+                  if(jsonResponse.response["0"].message=="Successfully created a new post")
                   {
+                    msg="Successfully created a new post";
                     self.$router.push("/explore");
                   }
               })
               .catch(function(error){
-                  console.log(error);
+                  //console.log(error);
               });
         }
     }
