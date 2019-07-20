@@ -1,7 +1,7 @@
 # ----------------------
 # Flask
 # ----------------------
-flask==0.12.4
+flask==1.0
 Flask-WTF
 Flask-SQLAlchemy
 Flask-Migrate
